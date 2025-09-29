@@ -83,11 +83,11 @@ function checkimg(tmp)
         
         local download_url
         if tmp == "Logo.png" then
-            download_url = "http://jiami.guimei.work/a/1759174962.txt"
+            download_url = "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/Logo.png"
         elseif tmp == "SQ.png" then
-            download_url = "http://jiami.guimei.work/a/1759140518.txt"
+            download_url = "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/SQ.png"
         elseif tmp == "Back.png" then
-            download_url = "http://jiami.guimei.work/a/1759201425.txt"
+            download_url = "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/Back.png"
         else
             download_url = "http://wss.wigwy.xyz/api/get/yjb/"..tmp
         end
@@ -101,7 +101,7 @@ function checkSound()
     local soundFilePath = "/sdcard/四系乃/音效/选择进程.mp3"
     if panduan(soundFilePath) ~= true then
         gg.toast("正在下载音效资源 选择进程.mp3\n请耐心等待")
-        local soundUrl = "http://jiami.guimei.work/a/1759166099.txt"
+        local soundUrl = "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/选择进程.mp3"
         download(soundUrl, soundFilePath)
     end
 end
@@ -111,7 +111,7 @@ function checkMamboSound()
     local soundFilePath = "/sdcard/四系乃/音效/曼波.mp3"
     if panduan(soundFilePath) ~= true then
         gg.toast("正在下载音效资源 曼波.mp3\n请耐心等待")
-        local soundUrl = "http://jiami.guimei.work/a/1759117264.txt"
+        local soundUrl = "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/曼波.mp3"
         download(soundUrl, soundFilePath)
     end
 end
@@ -121,7 +121,7 @@ function checkHeiSound()
     local soundFilePath = "/sdcard/四系乃/音效/嘿.mp3"
     if panduan(soundFilePath) ~= true then
         gg.toast("正在下载音效资源 嘿.mp3\n请耐心等待")
-        local soundUrl = "http://jiami.guimei.work/a/1759204674.txt"
+        local soundUrl = "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/嘿.mp3"
         download(soundUrl, soundFilePath)
     end
 end
