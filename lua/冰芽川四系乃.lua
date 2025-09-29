@@ -9,8 +9,198 @@ local android = import('android.*')
 local context = app.context
 local MediaPlayer = luajava.bindClass("android.media.MediaPlayer")
 
--- 播放音效的函数
+local 资源基地址 = {
+    "https://raw.githubusercontent.com/ThirteenSpices/ThirteenSpicesYoshino/main/资源/",
+    "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/"
+}
+
+local 必要资源 = {
+    {
+        本地路径 = "/sdcard/四系乃/图片/Logo.png",
+        文件名 = "Logo.png",
+        类型 = "图片",
+        最小大小 = 1700000
+    },
+    {
+        本地路径 = "/sdcard/四系乃/图片/Back.png",
+        文件名 = "Back.png", 
+        类型 = "图片",
+        最小大小 = 200000
+    },
+    {
+        本地路径 = "/sdcard/四系乃/图片/SQ.png",
+        文件名 = "SQ.png",
+        类型 = "图片",
+        最小大小 = 2000  
+    },
+    {
+        本地路径 = "/sdcard/四系乃/音效/选择进程.mp3",
+        文件名 = "选择进程.mp3",
+        类型 = "音效",
+        最小大小 = 390000
+    },
+    {
+        本地路径 = "/sdcard/四系乃/音效/曼波.mp3",
+        文件名 = "曼波.mp3",
+        类型 = "音效",
+        最小大小 = 40000 
+    },
+    {
+        本地路径 = "/sdcard/四系乃/音效/嘿.mp3",
+        文件名 = "嘿.mp3",
+        类型 = "音效",
+        最小大小 = 200000
+    }
+}
+
+-- 检查文件是否完整下载的函数
+function 检查文件完整性(文件路径, 最小大小)
+    -- 如果没有指定最小大小，使用默认值
+    最小大小 = 最小大小 or 1024 -- 默认最小1KB
+    if not panduan(文件路径) then
+        return false
+    end
+    
+    local 文件信息 = io.open(文件路径, "rb")
+    if not 文件信息 then
+        return false
+    end
+    
+    local 文件大小 = 文件信息:seek("end")
+    文件信息:close()
+    
+    return 文件大小 >= 最小大小
+end
+
+-- 下载资源函数
+function 下载资源(资源信息)
+    local 下载成功 = false
+    local 最大重试次数 = 2 -- 每个源重试2次
+    local 超时时间 = 10000 -- 10秒
+    
+    for i, 基地址 in ipairs(资源基地址) do
+        local 远程URL = 基地址 .. 资源信息.文件名
+        
+        for 重试次数 = 1, 最大重试次数 do
+            gg.toast("尝试从源"..i.."下载("..重试次数.."/"..最大重试次数.."): "..资源信息.文件名)
+            
+            -- 记录开始时间
+            local 开始时间 = os.time()
+            
+            -- 启动下载
+            local 下载线程 = luajava.newThread(function()
+                file.download(远程URL, 资源信息.本地路径)
+            end)
+            下载线程:start()
+            
+            -- 等待下载完成或超时
+            local 已超时 = false
+            while 下载线程:isAlive() do
+                gg.sleep(500) -- 每0.5秒检查一次
+                
+                -- 检查是否超时
+                if os.time() - 开始时间 > 超时时间 / 1000 then
+                    已超时 = true
+                    下载线程:interrupt()
+                    break
+                end
+                
+                -- 检查文件是否已完整下载
+                if 检查文件完整性(资源信息.本地路径, 资源信息.最小大小) then
+                    break
+                end
+            end
+            
+            -- 检查下载结果
+            if 检查文件完整性(资源信息.本地路径, 资源信息.最小大小) then
+                下载成功 = true
+                gg.toast("下载成功: "..资源信息.文件名)
+                break
+            else
+                if 已超时 then
+                    gg.toast("下载超时: "..资源信息.文件名)
+                else
+                    gg.toast("下载失败: "..资源信息.文件名)
+                end
+                
+                -- 删除可能损坏的文件
+                if panduan(资源信息.本地路径) then
+                    os.remove(资源信息.本地路径)
+                end
+            end
+        end
+        
+        if 下载成功 then
+            break
+        end
+    end
+    
+    return 下载成功
+end
+
+-- 添加资源预加载函数
+function 预加载必要资源()
+    gg.toast("正在检查必要资源...")
+    
+    -- 创建必要的目录
+    os.execute("mkdir -p /sdcard/四系乃/图片")
+    os.execute("mkdir -p /sdcard/四系乃/音效")
+    
+    local 下载数量 = 0
+    local 失败文件 = {}
+    
+    for i, 资源信息 in ipairs(必要资源) do
+        -- 检查文件完整性
+        if not 检查文件完整性(资源信息.本地路径, 资源信息.最小大小) then
+            gg.toast("下载"..资源信息.类型..": "..资源信息.文件名)
+            local 下载结果 = 下载资源(资源信息)
+            if 下载结果 then
+                下载数量 = 下载数量 + 1
+            else
+                table.insert(失败文件, 资源信息.文件名)
+            end
+        end
+    end
+    
+    if #失败文件 > 0 then
+        gg.alert("以下文件下载失败，部分功能可能无法正常使用:\n" .. table.concat(失败文件, "\n"))
+    end
+    
+    if 下载数量 > 0 then
+        gg.toast(string.format("资源下载完成 (%d/6)", 下载数量))
+    else
+        gg.toast("所有必要资源已就绪")
+    end
+    
+    return 下载数量, 失败文件
+end
+
+-- 播放音效函数
 function playSound(filePath)
+    -- 查找对应的资源信息
+    local 对应资源 = nil
+    for i, 资源信息 in ipairs(必要资源) do
+        if 资源信息.本地路径 == filePath then
+            对应资源 = 资源信息
+            break
+        end
+    end
+    
+    -- 检查文件是否存在且完整
+    local 最小大小 = 对应资源 and 对应资源.最小大小 or 1024
+    if not 检查文件完整性(filePath, 最小大小) then
+        if 对应资源 then
+            gg.toast("音效文件不存在或损坏，正在下载...")
+            if 下载资源(对应资源) then
+                gg.toast("音效文件下载完成")
+            else
+                return false
+            end
+        else
+            return false
+        end
+    end
+    
     local mediaPlayer = luajava.new(MediaPlayer)
     local fileDescriptor = io.open(filePath, "rb")
     if fileDescriptor then
@@ -18,8 +208,9 @@ function playSound(filePath)
         mediaPlayer:prepare()
         mediaPlayer:start()
         fileDescriptor:close()
+        return true
     else
-        print("音效文件路径无效: " .. filePath)
+        return false
     end
 end
 
@@ -76,72 +267,6 @@ end
 开 = "开"
 关 = "关"
 
--- 资源管理和下载
-function checkimg(tmp)
-    if panduan("/sdcard/四系乃/图片/"..tmp) ~= true then
-        gg.toast("正在下载资源"..tmp.."\n请耐心等待")
-        
-        local download_url
-        if tmp == "Logo.png" then
-            download_url = "http://jiami.guimei.work/a/1759174962.txt"
-        elseif tmp == "SQ.png" then
-            download_url = "http://jiami.guimei.work/a/1759140518.txt"
-        elseif tmp == "Back.png" then
-            download_url = "http://jiami.guimei.work/a/1759201425.txt"
-        else
-            download_url = "http://wss.wigwy.xyz/api/get/yjb/"..tmp
-        end
-        
-        download(download_url, "/sdcard/四系乃/图片/"..tmp)
-    end
-end
-
--- 音效文件管理和下载
-function checkSound()
-    local soundFilePath = "/sdcard/四系乃/音效/选择进程.mp3"
-    if panduan(soundFilePath) ~= true then
-        gg.toast("正在下载音效资源 选择进程.mp3\n请耐心等待")
-        local soundUrl = "http://jiami.guimei.work/a/1759166099.txt"
-        download(soundUrl, soundFilePath)
-    end
-end
-
--- 曼波音效文件管理和下载
-function checkMamboSound()
-    local soundFilePath = "/sdcard/四系乃/音效/曼波.mp3"
-    if panduan(soundFilePath) ~= true then
-        gg.toast("正在下载音效资源 曼波.mp3\n请耐心等待")
-        local soundUrl = "http://jiami.guimei.work/a/1759117264.txt"
-        download(soundUrl, soundFilePath)
-    end
-end
-
--- 嘿音效文件管理和下载
-function checkHeiSound()
-    local soundFilePath = "/sdcard/四系乃/音效/嘿.mp3"
-    if panduan(soundFilePath) ~= true then
-        gg.toast("正在下载音效资源 嘿.mp3\n请耐心等待")
-        local soundUrl = "http://jiami.guimei.work/a/1759204674.txt"
-        download(soundUrl, soundFilePath)
-    end
-end
-
--- 资源检查和下载调用
-ckimg = {
-    'Logo.png',
-    'Back.png',
-    'SQ.png'
-}
-
-for i = 1,#ckimg do
-    jindu = i
-    checkimg(ckimg[i])
-end
-
-checkSound()
-checkMamboSound()  -- 检查曼波音效
-checkHeiSound()    -- 检查嘿音效
-
 function 获取图片(txt)
     txt = string.url(txt,"de")
     ntxt = string.sub(string.gsub(txt,"/","-"),-10,-1)
@@ -150,6 +275,26 @@ function 获取图片(txt)
             file.download(txt,"/sdcard/四系乃/图片/"..ntxt)
         end
         txt = "/s/四系乃/图片/"..ntxt
+    else
+        -- 检查本地文件是否存在且完整
+        local 本地路径 = "/sdcard/四系乃/图片/"..txt
+        local 对应资源 = nil
+        for i, 资源信息 in ipairs(必要资源) do
+            if 资源信息.本地路径 == 本地路径 then
+                对应资源 = 资源信息
+                break
+            end
+        end
+        
+        -- 检查文件完整性
+        local 最小大小 = 对应资源 and 对应资源.最小大小 or 1024
+        if not 检查文件完整性(本地路径, 最小大小) then
+            if 对应资源 then
+                gg.toast("图片文件不存在或损坏，正在下载...")
+                下载资源(对应资源)
+            else
+            end
+        end
     end
     return luajava.getBitmapDrawable(txt)
 end
@@ -1965,6 +2110,8 @@ end),
             end),
     }
 }
+
+预加载必要资源()
 
 -- 启动菜单系统
 changan.menu({
