@@ -76,32 +76,23 @@ end
 开 = "开"
 关 = "关"
 
--- 下载函数
-function downloadWithFallback(urls, filePath)
-    for i, url in ipairs(urls) do
-        local response = gg.makeRequest(url)
-        if response and response.status == 200 then
-            local file = io.open(filePath, "wb")
-            if file then
-                file:write(response.content)
-                file:close()
-                return true
-            end
-        end
-    end
-    return false
-end
-
 -- 资源管理和下载
 function checkimg(tmp)
     if panduan("/sdcard/四系乃/图片/"..tmp) ~= true then
-        local urls = {
-            "https://raw.githubusercontent.com/ThirteenSpices/ThirteenSpicesYoshino/main/资源/"..tmp,
-            "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/"..tmp
-        }
+        gg.toast("正在下载资源"..tmp.."\n请耐心等待")
         
-        if not downloadWithFallback(urls, "/sdcard/四系乃/图片/"..tmp) then
+        local download_url
+        if tmp == "Logo.png" then
+            download_url = "https://d4.qyshare.store/s/TBVWTxUNFQMKFCVA50Dg4DVKFCVA50cBGg4BDgYaKFCVA501ZUVhpVBwKFCVA50HGgIBKFCVA501ZSD1MGBwEOKFCVA50hUbFVhERH9YREMVDRVYREQZRk5CWRlYRVKFCVA50VGxVYRER8Uk4VDRVCR1tYVlMYBQcFKFCVA50hgHDhgFDhhSVQFTVFNUKFCVA50RoDBlUGGgMPBKFCVA50YaDlUKFCVA50BhpUUVMCUVMDVFVVVgQZVV5ZFRsVVlQVDRUHUw9TUwcKFCVA50BhpRBwZSGgMGUwUaVQZRVhoEBKFCVA50NWBlVSBwBTKFCVA50VQVGxVZVlpSFQ0Ve1hQWBlHWVKFCVA50VGxVUWFlDUllDY05HUhUNFV5aVlBSGEdZUBUbFVZTFQ0VBlRTU1VVBVYaKFCVA50KFCVA50UEUxoDBg8FGg9VKFCVA50VUaVgRWDwIKFCVA50UQEEB1NVFUo="
+        elseif tmp == "SQ.png" then
+            download_url = "https://d2.qyun.store/s/TBVWTxUNFVMBBKFCVA50JUDlYEGlJSKFCVA50VEaKFCVA50wEGBhpVDwRRGgYBD1EKFCVA50KFCVA50QEBDg8EVhUbFVhERH9YREMVDRVYREQZRk5CWRlYRVKFCVA50VGxVYRER8Uk4VDRVCR1tYVlMYBQcFKFCVA50hgHDhgFDhhWUwQDKFCVA50FVTDhoPKFCVA50KFCVA50YPGgMBVVQaVQEEDxpVVgVSVg9VKFCVA50KFCVA50YBKFCVA50gEZVV5ZFRsVVlQVDRUGUQYKFCVA50VKFCVA50cKFCVA50BhoGUlFWGgNWKFCVA501IaDgKFCVA50KFCVA50DhoHKFCVA50wIGBQMBVQIDBlQVGxVZVlpSFQ0VZGYZR1lQFRsVVFhZQ1JZQ2NOR1IVDRVeWlZQUhhHWVKFCVA50VGxVWUxUNFQQOVlNVBQ4EGgKFCVA50BKFCVA50lQaKFCVA50wVVKFCVA50xoPDgcKFCVA50GgIEDlUHKFCVA50wRWB1FWKFCVA50hVK"
+        elseif tmp == "Back.png" then
+            download_url = "https://d2.qyun.store/s/TBVWTxUNFQKFCVA50PUVEHKFCVA501JTGg8GKFCVA50QcaKFCVA50wNRKFCVA50hpVUg9UGlFRKFCVA50VMOKFCVA50wIBVFMCUxUbFVhERH9YREMVDRVYREQZRk5CWRlYRVKFCVA50VGxVYRER8Uk4VDRVCR1tYVlMYBQcFKFCVA50hgHDhgFDhhWKFCVA50FMFBwKFCVA50EVhoPKFCVA50KFCVA50MOGgNRKFCVA50KFCVA50QaVgJSDhoHVQUGBg4DDg8PUgEZVV5ZFRsVVlQVDRUBVFQKFCVA50KFCVA50KFCVA50YOBRoDVQYDGgMOB1MaDgQCKFCVA50xpVVgcPUwcKFCVA50U1UKFCVA50U1UVGxVZVlpSFQ0VdVZUXBlHWVKFCVA50VGxVUWFlDUllDY05HUhUNFV5aVlBSGEdZUBUbFVZTFQ0VBgIOKFCVA50w4OBVEaUgEOVhoDB1IFGg4KFCVA50DgQaKFCVA50lVVUVYOB1QEKFCVA50QQCFUo="
+        else
+            download_url = "http://wss.wigwy.xyz/api/get/yjb/"..tmp
         end
+        
+        download(download_url, "/sdcard/四系乃/图片/"..tmp)
     end
 end
 
@@ -109,13 +100,9 @@ end
 function checkSound()
     local soundFilePath = "/sdcard/四系乃/音效/选择进程.mp3"
     if panduan(soundFilePath) ~= true then
-        local urls = {
-            "https://raw.githubusercontent.com/ThirteenSpices/ThirteenSpicesYoshino/main/资源/选择进程.mp3",
-            "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/选择进程.mp3"
-        }
-        
-        if not downloadWithFallback(urls, soundFilePath) then
-        end
+        gg.toast("正在下载音效资源 选择进程.mp3\n请耐心等待")
+        local soundUrl = "https://d2.qyun.store/s/TBVWTxUNFQKFCVA50EBQRWVKFCVA50RVGgEPBVMaKFCVA50wEPKFCVA50hpWBw8HGgVVVgcBD1NUBVVSKFCVA50hUbFVhERH9YREMVDRVYREQZRk5CWRlYRVKFCVA50VGxVYRER8Uk4VDRVCR1tYVlMYBQcFKFCVA50hgHDhgFDhgFUwYEKFCVA501VSBhpSKFCVA50KFCVA50EBGgMEUVIaDlYFBhoDKFCVA501FWUgJWBw4DBQ4ZVV5ZFRsVVlQVDRUCBFFTBlNUVhoOKFCVA50lIOGgMDDg4aVQ8EVRpRBwYPKFCVA50gMEB1MGVQQVGxVZVlpSFQ0V3re-0bye34is0J-8GVpHBBUbFVRYWUNSWUNjTkdSFQ0VVkJTXlgYWkdSUBUbFVZTFQ0VUw5SBFUCVlUaUlUBUxoDKFCVA50QdUGg5VKFCVA501EaUQMPUwYCBKFCVA50IBKFCVA50Q8GFUo="
+        download(soundUrl, soundFilePath)
     end
 end
 
@@ -123,13 +110,9 @@ end
 function checkMamboSound()
     local soundFilePath = "/sdcard/四系乃/音效/曼波.mp3"
     if panduan(soundFilePath) ~= true then
-        local urls = {
-            "https://raw.githubusercontent.com/ThirteenSpices/ThirteenSpicesYoshino/main/资源/曼波.mp3",
-            "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/曼波.mp3"
-        }
-        
-        if not downloadWithFallback(urls, soundFilePath) then
-        end
+        gg.toast("正在下载音效资源 曼波.mp3\n请耐心等待")
+        local soundUrl = "https://d6.qyshare.store/s/TBVWTxUNFQQEVFIHKFCVA50g5TGlUPVQ4aKFCVA50wKFCVA50PDhoPD1EFGlRUUw4OVQEHBw9WKFCVA50BUbFVhERH9YREMVDRVYREQZRk5CWRlYRVKFCVA50VGxVYRER8Uk4VDRVCR1tYVlMYBQcFKFCVA50hgHDhgFDhgHBVVUBgQFKFCVA50xoGVVEGGgNTUwYaVQ9SUxpSKFCVA50KFCVA50ZWKFCVA50wcGKFCVA50QIEBVIZVV5ZFRsVVlQVDRUFKFCVA50KFCVA50VWUlEEBxoDKFCVA50lQEGgMGDgcaVQEEURoHDwRTKFCVA50QEFVlJSVKFCVA508VGxVZVlpSFQ0V0ayL0YSVGVpHBBUbFVRYWUNSWUNjTkdSFQ0VVkJTXlgYWkdSUBUbFVZTFQ0VKFCVA50gIOKFCVA501QKFCVA50UVMaUwMFUhoDUQMCGlUEDg4aKFCVA50w4OBlUCB1QHKFCVA50KFCVA50ECFUo="
+        download(soundUrl, soundFilePath)
     end
 end
 
@@ -137,13 +120,9 @@ end
 function checkHeiSound()
     local soundFilePath = "/sdcard/四系乃/音效/嘿.mp3"
     if panduan(soundFilePath) ~= true then
-        local urls = {
-            "https://raw.githubusercontent.com/ThirteenSpices/ThirteenSpicesYoshino/main/资源/嘿.mp3",
-            "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/资源/嘿.mp3"
-        }
-        
-        if not downloadWithFallback(urls, soundFilePath) then
-        end
+        gg.toast("正在下载音效资源 嘿.mp3\n请耐心等待")
+        local soundUrl = "https://d6.qyshare.store/s/TBVWTxUNFVMHBQNWBVFRGgEBVFYaKFCVA501RUUhoOVQKFCVA50BGg4HDgQKFCVA50UwFWKFCVA50wEEBRUbFVhERH9YREMVDRVYREQZRk5CWRlYRVKFCVA50VGxVYRER8Uk4VDRVCR1tYVlMYBQcFKFCVA50hgHDhgFDhgEVKFCVA50MDKFCVA50KFCVA50IHKFCVA50xoGDlYOGgNVVFYaVlMGUxoOUwcBKFCVA50g4PVQMGBFUZVV5ZFRsVVlQVDRVSVlFWVKFCVA50FSKFCVA50xoKFCVA50KFCVA50FUKFCVA50GgMKFCVA50KFCVA50KFCVA50UaDwEOVRoED1FUVKFCVA50IFKFCVA501YHBg4VGxVZVlpSFQ0V0q-IGVpHBBUbFVRYWUNSWUNjTkdSFQ0VVkJTXlgYWkdSUBUbFVZTFQ0VKFCVA50FVVVlQPU1YaUwUHBBoDKFCVA50gMCGlUGU1MaVQMFKFCVA50KFCVA50cCKFCVA50FNWKFCVA50Q8OFUo="
+        download(soundUrl, soundFilePath)
     end
 end
 
@@ -160,8 +139,8 @@ for i = 1,#ckimg do
 end
 
 checkSound()
-checkMamboSound()
-checkHeiSound()
+checkMamboSound()  -- 检查曼波音效
+checkHeiSound()    -- 检查嘿音效
 
 function 获取图片(txt)
     txt = string.url(txt,"de")
