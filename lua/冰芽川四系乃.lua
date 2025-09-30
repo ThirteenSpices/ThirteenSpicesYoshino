@@ -208,8 +208,14 @@ function playSound(filePath)
         mediaPlayer:prepare()
         mediaPlayer:start()
         fileDescriptor:close()
+        mediaPlayer:setOnCompletionListener(luajava.createProxy("android.media.MediaPlayer$OnCompletionListener", {
+            onCompletion = function(mp)
+                mp:release()
+            end
+        }))
         return true
     else
+        mediaPlayer:release()
         return false
     end
 end
