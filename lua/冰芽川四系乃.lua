@@ -389,6 +389,14 @@ function getButtonBG()
     return selector
 end
 
+function getSwitchOuterBG()
+    return getVerticalBG({0xffffffff,0xffffffff}, 360, 2, 0xffA0D1FF)
+end
+
+function getSwitchInnerBG()
+    return getVerticalBG({0xffA0D1FF,0xffA0D1FF}, 360)
+end
+
 function getSelector()
     selector = luajava.getStateListDrawable()
     selector:addState({
@@ -723,10 +731,16 @@ changan.menu = function(sview)
     draw.text('.', -9200,-9200)
 
     while true do
-        if tuichu == 1 then break end
-        jianting3(qiehuan)
-        gg.sleep(300)
+    if tuichu == 1 then 
+        break 
     end
+    if 启用音量键隐藏 then
+        jianting3(qiehuan)
+    else
+        gg.sleep(100)
+    end
+    gg.sleep(200)
+end
 
     luajava.setFloatingWindowHide(false)
 end
@@ -973,6 +987,88 @@ layout_height = "24dp" ,
     return _ENV [t1id]
 end
 
+switchs = {}
+
+function changan.switch(name, funcOn, funcOff)
+    local switchId = "switch_" .. guid()
+    
+    _ENV[switchId] = "关"
+    
+    local switchIndicator = luajava.loadlayout({
+        LinearLayout,
+        layout_width = "24dp",
+        layout_height = "24dp",
+        gravity = "center",
+        background = getVerticalBG({0xffffffff,0xffffffff}, 360, 2, 0xffA0D1FF),
+        id = luajava.newId(switchId .. "_outer")
+    })
+    
+    local innerCircle = luajava.loadlayout({
+        View,
+        layout_width = "15dp",
+        layout_height = "15dp",
+        background = getVerticalBG({0xffA0D1FF,0xffA0D1FF}, 360),
+        visibility = "gone",
+        id = luajava.newId(switchId .. "_inner")
+    })
+    
+    switchIndicator:addView(innerCircle)
+    
+    local switchLayout = luajava.loadlayout({
+        LinearLayout,
+        layout_width = 'match_parent',
+        layout_height = "wrap_content", 
+        {
+            LinearLayout,
+            layout_height='30dp',
+            layout_width = "fill_parent",
+            gravity = "center_vertical",
+            layout_margin='5dp',
+            elevation='3dp',
+            background = getButtonBG(),
+            padding="3dp",
+            onClick = function()
+                if _ENV[switchId] == "关" then
+                    _ENV[switchId] = "开"
+                    innerCircle:setVisibility(View.VISIBLE)
+                    changan.controlWater(switchIndicator, 200)
+                    if funcOn then
+                        luajava.newThread(funcOn):start()
+                    end
+                else
+                    _ENV[switchId] = "关"
+                    innerCircle:setVisibility(View.GONE)
+                    changan.controlWater(switchIndicator, 200)
+                    if funcOff then
+                        luajava.newThread(funcOff):start()
+                    end
+                end
+            end,
+            {
+                TextView,
+                textColor = "#000000",
+                text = name,
+                textSize = "13sp",
+                gravity='center',
+                layout_height = "20dp",
+                layout_width = "0dp",
+                layout_weight = 1,
+                layout_marginLeft='30dp',
+            },
+            {
+                LinearLayout,
+                layout_width = "30dp",
+                layout_height = "30dp",
+                gravity = "center",
+                switchIndicator
+            }
+        }
+    })
+    
+    switchs[switchId] = switchLayout
+    return switchLayout
+end
+
 corbk = true
 当前ui = 1
 
@@ -1163,9 +1259,15 @@ local function exit()
     tuichu = 1
     luajava.setFloatingWindowHide(false)
     luajava.post(function()
-        window:removeView(floatWindow)
+        if floatWindow and window then
+            window:removeView(floatWindow)
+        end
     end)
+    gg.toast("正在退出...")
+    os.exit()
 end
+
+setExitEvent(exit)
 
 setExitEvent(exit)
 
@@ -1469,336 +1571,336 @@ switchs={}
 无=function() end
 
 -- 页面配置
-标题='四系乃'
+标题='冰芽川四系乃'
 背景图片="/sdcard/四系乃/图片/Back.png"
 悬浮窗图标 = "/sdcard/四系乃/图片/Logo.png"
 
-function huiz()
-    -- 绘制代码
-end
+启用音量键隐藏 = false
 
+function huiz()
+
+end
 
 第一页 = {
     ['分页名字']="主页",
     ['侧边图标']="/sdcard/四系乃/图片/Logo.png",
     ['功能配置']={
-    changan.button('选择进程', function()
-    gg.setProcessX()  -- 设置进程
-    local soundPath = "/sdcard/四系乃/音效/选择进程.mp3"  -- 音效路径
-    playSound(soundPath)  -- 播放音效
+changan.button('显示公告', function()
+gg.alert("TG@YoshinoBypass\n反馈@ThirteenSpices_Bot")
 end),
-        changan.button("Logo防闪",
-function()
-    local function S_Pointer(t_So, t_Offset, _bit)
-        -- S_Pointer函数
-        local function getRanges()
-            local ranges = {}
-            local t = gg.getRangesList('^/data/*.so*$')
-            for i, v in pairs(t) do
-                if v.type:sub(2, 2) == 'w' then
-                    table.insert(ranges, v)
-                end
-            end
-            return ranges
-        end
+    changan.button('选择进程', function()
+    gg.setProcessX()
+    local soundPath = "/sdcard/四系乃/音效/选择进程.mp3"
+    playSound(soundPath)
+end),
+    }
+}
 
-        local function Get_Address(N_So, Offset, ti_bit)
-            local ti = gg.getTargetInfo()
-            local S_list = getRanges()
-            local _Q = tonumber(0x167ba0fe)
-            local t = {}
+防封页 = {
+    ['分页名字']='防封',
+    ['侧边图标']="/sdcard/四系乃/图片/Logo.png",
+    ['功能配置']={
+        changan.button('选择进程', function()
+            gg.setProcessX()
+            local soundPath = "/sdcard/四系乃/音效/选择进程.mp3"
+            playSound(soundPath)
+        end),
 
-            local _t
-            local _S = nil
-            if ti_bit then
-                _t = 32
-             else
-                _t = 4
-            end
-
-            for i in pairs(S_list) do
-                local _N = S_list[i].internalName:gsub('^.*/', '')
-                if N_So[1] == _N and N_So[2] == S_list[i].state then
-                    _S = S_list[i]
-                    break
-                end
-            end
-
-            if _S then
-                t[#t + 1] = {}
-                t[#t].address = _S.start + Offset[1]
-                t[#t].flags = _t
-                if #Offset ~= 1 then
-                    for i = 2, #Offset do
-                        local S = gg.getValues(t)
-                        t = {}
-                        for _ in pairs(S) do
-                            if not ti.x64 then
-                                S[_].value = S[_].value & 0xFFFFFFFF
-                            end
-                            t[#t + 1] = {}
-                            t[#t].address = S[_].value + Offset[i]
-                            t[#t].flags = _t
+        changan.button("Logo防闪", function()
+            local function S_Pointer(t_So, t_Offset, _bit)
+                -- S_Pointer函数
+                local function getRanges()
+                    local ranges = {}
+                    local t = gg.getRangesList('^/data/*.so*$')
+                    for i, v in pairs(t) do
+                        if v.type:sub(2, 2) == 'w' then
+                            table.insert(ranges, v)
                         end
                     end
+                    return ranges
                 end
-                _S = t[#t].address
+
+                local function Get_Address(N_So, Offset, ti_bit)
+                    local ti = gg.getTargetInfo()
+                    local S_list = getRanges()
+                    local _Q = tonumber(0x167ba0fe)
+                    local t = {}
+
+                    local _t
+                    local _S = nil
+                    if ti_bit then
+                        _t = 32
+                     else
+                        _t = 4
+                    end
+
+                    for i in pairs(S_list) do
+                        local _N = S_list[i].internalName:gsub('^.*/', '')
+                        if N_So[1] == _N and N_So[2] == S_list[i].state then
+                            _S = S_list[i]
+                            break
+                        end
+                    end
+
+                    if _S then
+                        t[#t + 1] = {}
+                        t[#t].address = _S.start + Offset[1]
+                        t[#t].flags = _t
+                        if #Offset ~= 1 then
+                            for i = 2, #Offset do
+                                local S = gg.getValues(t)
+                                t = {}
+                                for _ in pairs(S) do
+                                    if not ti.x64 then
+                                        S[_].value = S[_].value & 0xFFFFFFFF
+                                    end
+                                    t[#t + 1] = {}
+                                    t[#t].address = S[_].value + Offset[i]
+                                    t[#t].flags = _t
+                                end
+                            end
+                        end
+                        _S = t[#t].address
+                    end
+                    return _S
+                end
+
+                local _A = string.format('0x%X', Get_Address(t_So, t_Offset, _bit))
+                return _A
             end
-            return _S
-        end
 
-        local _A = string.format('0x%X', Get_Address(t_So, t_Offset, _bit))
-        return _A
-    end
+        -- 防闪
+            local t = {"libanogs.so:bss", "Cb"}
+            local tt = {0x4F0}
+            local ttt = S_Pointer(t, tt, true)
+            gg.addListItems({{address = ttt, flags = 4, value = 4096, freeze = true}})
 
--- 防闪
-    local t = {"libanogs.so:bss", "Cb"}
-    local tt = {0x4F0}
-    local ttt = S_Pointer(t, tt, true)
-    gg.addListItems({{address = ttt, flags = 4, value = 4096, freeze = true}})
-
-    local t = {"libanogs.so:bss", "Cb"}
-    local tt = {0x578}
-    local ttt = S_Pointer(t, tt, true)
-    gg.addListItems({{address = ttt, flags = 4, value = 4096, freeze = true}})
-    
-    playSound("/sdcard/四系乃/音效/曼波.mp3")
-end),
-        changan.box({
-            "防封",
-            changan.check({
-                {
-    "Logo杀67",
-    function()
-        -- 杀67过校验
-        if gg.getRangesList("libUE4.so")[1] then
-            local t = {}
-            t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x71768FC; -- 数值地址:0x7D4FA188FC
-            gg.addListItems({
-                [1] = { 
-                    address = t[1],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-            })
-            gg.toast("开启成功")
-        end
-        if gg.getRangesList("libUE4.so")[1] then
-            local t = {}
-            t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x715EDAC; -- 数值地址:0x7D4FA00DAC
-            t[2] = gg.getRangesList("libUE4.so")[1]["start"] + 0x7162C64; -- 数值地址:0x7D4FA04C64
-            gg.addListItems({
-                [1] = { 
-                    address = t[1],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-                [2] = { 
-                    address = t[2],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-            })
-            gg.toast("开启成功")
-        end
-        if gg.getRangesList("libUE4.so")[1] then
-            local t = {}
-            t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x71BFE74; -- 数值地址:0x7D4FA61E74
-            t[2] = gg.getRangesList("libUE4.so")[1]["start"] + 0x7F502A0; -- 数值地址:0x7D507F22A0
-            t[3] = gg.getRangesList("libUE4.so")[1]["start"] + 0x7F514F0; -- 数值地址:0x7D507F34F0
-            gg.addListItems({
-                [1] = { 
-                    address = t[1],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-                [2] = { 
-                    address = t[2],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-                [3] = { 
-                    address = t[3],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-            })
-            gg.toast("开启成功")
-        end
-        if gg.getRangesList("libUE4.so:bss")[1] then
-            local t = {}
-            t[1] = gg.getRangesList("libUE4.so:bss")[1]["start"] + 0x1A2238; -- 数值地址:0x7D56EC2238
-            gg.addListItems({
-                [1] = { 
-                    address = t[1],
-                    flags = 4,
-                    value = 0,
-                    freeze = true,
-                },
-            })
-            gg.toast("开启成功")
-        end
-        gg.toast("Logo杀67功能已启用")
-        playSound("/sdcard/四系乃/音效/曼波.mp3")
-    end,
-    function()
-        -- 不能关闭
-        gg.toast("无法关闭")
-    end
-},
-{
-    "大厅防",
-    function()
-        -- 大厅防
-        if gg.getRangesList("libgcloud.so")[1] then
-            gg.addListItems({
-                [1] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3857996,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [2] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3858004,
-                    flags = 4,
-                    value = 872415232,
-                    freeze = true
-                },
-                [3] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3858092,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [4] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3858104,
-                    flags = 4,
-                    value = -1440807968,
-                    freeze = true
-                },
-                [5] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3858128,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [6] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3858164,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [7] = {
-                    address = gg.getRangesList("libgcloud.so")[1].start + 3858168,
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true
-                }
-            })
-        end
-        
-        if gg.getRangesList("libTDataMaster.so")[1] then
-            gg.addListItems({
-                [1] = {
-                    address = gg.getRangesList("libTDataMaster.so")[1].start + 2672860,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [2] = {
-                    address = gg.getRangesList("libTDataMaster.so")[1].start + 2672868,
-                    flags = 4,
-                    value = -1440807964,
-                    freeze = true
-                },
-                [3] = {
-                    address = gg.getRangesList("libTDataMaster.so")[1].start + 2672896,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [4] = {
-                    address = gg.getRangesList("libTDataMaster.so")[1].start + 2672900,
-                    flags = 4,
-                    value = -1440807968,
-                    freeze = true
-                }
-            })
-        end
-        
-        if gg.getRangesList("libanogs.so")[1] then
-            gg.addListItems({
-                [1] = {
-                    address = gg.getRangesList("libanogs.so")[1].start + 3570196,
-                    flags = 4,
-                    value = -721215457,
-                    freeze = true
-                },
-                [2] = {
-                    address = gg.getRangesList("libanogs.so")[1].start + 4251792,
-                    flags = 4,
-                    value = 169804064,
-                    freeze = true
-                }
-            })
-        end
-        
-        gg.toast("大厅防封已开启")
-        playSound("/sdcard/四系乃/音效/曼波.mp3")
-    end,
-    function()
-        -- 不能关
-        gg.toast("无法关闭")
-    end
-},
-{
-    "离线",
-    function()
-        -- 离线开启
-        if gg.getRangesList("libgcloud.so")[1] then
-            local t = {}
-            t[1] = gg.getRangesList("libgcloud.so")[1]["start"] + 0x89B50; -- 数值地址:0x7B208A2B50
-            gg.addListItems({
-                [1] = { 
-                    address = t[1],
-                    flags = 4,
-                    value = -698416192,
-                    freeze = true,
-                },
-            })
-            gg.toast("全局离线已开启")
+            local t = {"libanogs.so:bss", "Cb"}
+            local tt = {0x578}
+            local ttt = S_Pointer(t, tt, true)
+            gg.addListItems({{address = ttt, flags = 4, value = 4096, freeze = true}})
+            
             playSound("/sdcard/四系乃/音效/曼波.mp3")
-        else
-            gg.toast("未找到 libgcloud.so 模块")
-        end
-    end,
-    function()
-        if gg.getRangesList("libgcloud.so")[1] then
-            local t = {}
-            t[1] = gg.getRangesList("libgcloud.so")[1]["start"] + 0x89B50; -- 数值地址:0x7B208A2B50
-            gg.addListItems({
-                [1] = { 
-                    address = t[1],
-                    flags = 4,
-                    value = -1342166224,
-                    freeze = true,
-                },
-            })
-            gg.toast("全局离线已关闭")
+        end),
+        
+        changan.button("Logo杀67", function()
+            -- 杀67过校验
+            if gg.getRangesList("libUE4.so")[1] then
+                local t = {}
+                t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x71768FC; -- 数值地址:0x7D4FA188FC
+                gg.addListItems({
+                    [1] = { 
+                        address = t[1],
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true,
+                    },
+                })
+                gg.toast("开启成功")
+            end
+            if gg.getRangesList("libUE4.so")[1] then
+                local t = {}
+                t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x715EDAC; -- 数值地址:0x7D4FA00DAC
+                t[2] = gg.getRangesList("libUE4.so")[1]["start"] + 0x7162C64; -- 数值地址:0x7D4FA04C64
+                gg.addListItems({
+                    [1] = { 
+                        address = t[1],
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true,
+                    },
+                    [2] = { 
+                        address = t[2],
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true,
+                    },
+                })
+                gg.toast("开启成功")
+            end
+            if gg.getRangesList("libUE4.so")[1] then
+                local t = {}
+                t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x71BFE74; -- 数值地址:0x7D4FA61E74
+                t[2] = gg.getRangesList("libUE4.so")[1]["start"] + 0x7F502A0; -- 数值地址:0x7D507F22A0
+                t[3] = gg.getRangesList("libUE4.so")[1]["start"] + 0x7F514F0; -- 数值地址:0x7D507F34F0
+                gg.addListItems({
+                    [1] = { 
+                        address = t[1],
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true,
+                    },
+                    [2] = { 
+                        address = t[2],
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true,
+                    },
+                    [3] = { 
+                        address = t[3],
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true,
+                    },
+                })
+                gg.toast("开启成功")
+            end
+            if gg.getRangesList("libUE4.so:bss")[1] then
+                local t = {}
+                t[1] = gg.getRangesList("libUE4.so:bss")[1]["start"] + 0x1A2238; -- 数值地址:0x7D56EC2238
+                gg.addListItems({
+                    [1] = { 
+                        address = t[1],
+                        flags = 4,
+                        value = 0,
+                        freeze = true,
+                    },
+                })
+                gg.toast("开启成功")
+            end
+            gg.toast("Logo杀67功能已启用")
             playSound("/sdcard/四系乃/音效/曼波.mp3")
-        else
-            gg.toast("未找到 libgcloud.so 模块")
-        end
-    end
-},
-            }),
-        }),
+        end),
+        
+        changan.button("大厅防", function()
+            -- 大厅防
+            if gg.getRangesList("libgcloud.so")[1] then
+                gg.addListItems({
+                    [1] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3857996,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [2] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3858004,
+                        flags = 4,
+                        value = 872415232,
+                        freeze = true
+                    },
+                    [3] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3858092,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [4] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3858104,
+                        flags = 4,
+                        value = -1440807968,
+                        freeze = true
+                    },
+                    [5] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3858128,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [6] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3858164,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [7] = {
+                        address = gg.getRangesList("libgcloud.so")[1].start + 3858168,
+                        flags = 4,
+                        value = -698416192,
+                        freeze = true
+                    }
+                })
+            end
+            
+            if gg.getRangesList("libTDataMaster.so")[1] then
+                gg.addListItems({
+                    [1] = {
+                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672860,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [2] = {
+                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672868,
+                        flags = 4,
+                        value = -1440807964,
+                        freeze = true
+                    },
+                    [3] = {
+                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672896,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [4] = {
+                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672900,
+                        flags = 4,
+                        value = -1440807968,
+                        freeze = true
+                    }
+                })
+            end
+            
+            if gg.getRangesList("libanogs.so")[1] then
+                gg.addListItems({
+                    [1] = {
+                        address = gg.getRangesList("libanogs.so")[1].start + 3570196,
+                        flags = 4,
+                        value = -721215457,
+                        freeze = true
+                    },
+                    [2] = {
+                        address = gg.getRangesList("libanogs.so")[1].start + 4251792,
+                        flags = 4,
+                        value = 169804064,
+                        freeze = true
+                    }
+                })
+            end
+            
+            gg.toast("大厅防封已开启")
+            playSound("/sdcard/四系乃/音效/曼波.mp3")
+        end),
+        
+        changan.switch("全局离线", 
+            function()
+                -- 开启
+                if gg.getRangesList("libgcloud.so")[1] then
+                    local t = {}
+                    t[1] = gg.getRangesList("libgcloud.so")[1]["start"] + 0x89B50; -- 数值地址:0x7B208A2B50
+                    gg.addListItems({
+                        [1] = { 
+                            address = t[1],
+                            flags = 4,
+                            value = -698416192,
+                            freeze = true,
+                        },
+                    })
+                    gg.toast("全局离线已开启")
+                    playSound("/sdcard/四系乃/音效/曼波.mp3")
+                else
+                    gg.toast("未找到libgcloud.so模块")
+                end
+            end,
+            function()
+                -- 关闭
+                if gg.getRangesList("libgcloud.so")[1] then
+                    local t = {}
+                    t[1] = gg.getRangesList("libgcloud.so")[1]["start"] + 0x89B50; -- 数值地址:0x7B208A2B50
+                    gg.addListItems({
+                        [1] = { 
+                            address = t[1],
+                            flags = 4,
+                            value = -1342166224,
+                            freeze = true,
+                        },
+                    })
+                    gg.toast("全局离线已关闭")
+                    playSound("/sdcard/四系乃/音效/曼波.mp3")
+                else
+                    gg.toast("未找到libgcloud.so模块")
+                end
+            end
+        ),        
     }
 }
 
@@ -1806,10 +1908,16 @@ end),
     ['分页名字']='功能',
     ['侧边图标']="/sdcard/四系乃/图片/Logo.png",
     ['功能配置']={
+        changan.button('选择进程', function()
+            gg.setProcessX()
+            local soundPath = "/sdcard/四系乃/音效/选择进程.mp3"
+            playSound(soundPath)
+        end),
+        
         changan.button("静态广角", function()
         -- 静态广角
     local input = gg.prompt(
-        {"静态广角大小 (1~3)"},
+        {"静态广角大小 (1~3 改1恢复)"},
         {1.5},  -- 默认值
         {"number"}
     )
@@ -1904,7 +2012,7 @@ end),
             end
 
             local k = gg.prompt({
-                "动态广角大小(90~150)"
+                "动态广角大小(90~150 改90恢复)"
             }, {"103"}, {"number"})
             
             if k == nil then
@@ -1939,7 +2047,7 @@ end),
                 gg.toast("动态广角设置失败")
             end
         end),
-        changan.button("聚点", function()
+        changan.button("聚点(全局)", function()
             -- 聚点功能
             if gg.getRangesList("libUE4.so")[1] then
                 gg.setValues({
@@ -1955,7 +2063,7 @@ end),
                 gg.toast("未找到 libUE4.so 模块")
             end
         end),
-        changan.button("无后", function()
+        changan.button("无后(全局)", function()
             -- 无后
             if gg.getRangesList("libUE4.so")[1] then
                 gg.setValues({
@@ -2076,52 +2184,27 @@ end),
     ['分页名字']="设置",
     ['侧边图标']="/sdcard/四系乃/图片/Logo.png",
     ['功能配置']={
-        changan.button("4.0.1", function()
-    -- 版本检查
-    local internalVersion = "1"  -- 内部版本号
-    
-    local versionUrls = {
-        "https://raw.githubusercontent.com/ThirteenSpices/ThirteenSpicesYoshino/main/lua/version.txt",
-        "https://cdn.jsdelivr.net/gh/ThirteenSpices/ThirteenSpicesYoshino@main/lua/version.txt"
-    }
-    
-    local response
-    local success = false
-    
-    for i, url in ipairs(versionUrls) do
-        response = gg.makeRequest(url)
-        
-        if response and response.code == 200 then
-            success = true
-            break
-        end
-    end
-    
-    if success then
-        local remoteVersion = response.content:gsub("%s+", "")  -- 去除空白字符
-        
-        if remoteVersion == internalVersion then
-            gg.alert("当前已是最新版本")
-        else
-            gg.alert("发现新版本: " .. remoteVersion .. "\n当前版本: " .. internalVersion .. "\n请更新脚本")
-        end
-    else
-        gg.alert("版本检查失败，请检查网络连接")
-    end
-end),
-        changan.button(
-            "退出",
+        changan.switch("音量键隐藏", 
             function()
-                tuichu=1
-            end),
+                启用音量键隐藏 = true
+            end,
+            function()
+                启用音量键隐藏 = false
+            end
+        ),
+        
+        changan.button("退出", function()
+            -- 直接调用退出函数
+            exit()
+        end),
     }
 }
 
 预加载必要资源()
 
--- 启动菜单系统
 changan.menu({
     第一页,   -- 主页
+    防封页,   -- 防封
     功能页,   -- 功能
     设置页,   -- 设置
 })
