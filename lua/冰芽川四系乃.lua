@@ -31,7 +31,13 @@ local 必要资源 = {
         本地路径 = "/sdcard/四系乃/图片/SQ.png",
         文件名 = "SQ.png",
         类型 = "图片",
-        最小大小 = 2000  
+        最小大小 = 2000
+    },
+    {
+        本地路径 = "/sdcard/四系乃/图片/R.png",
+        文件名 = "R.png",
+        类型 = "图片",
+        最小大小 = 1800
     },
     {
         本地路径 = "/sdcard/四系乃/音效/选择进程.mp3",
@@ -55,7 +61,6 @@ local 必要资源 = {
 
 -- 检查文件是否完整下载的函数
 function 检查文件完整性(文件路径, 最小大小)
-    -- 如果没有指定最小大小，使用默认值
     最小大小 = 最小大小 or 1024 -- 默认最小1KB
     if not panduan(文件路径) then
         return false
@@ -427,9 +432,15 @@ end
 -- UI组件系统
 YoYoImpl = luajava.getYoYoImpl()
 
-function changan.controlRotation9(control, startAngle, endAngle)
+changan.controlRotation9 = function(control, startAngle, endAngle)
+    if not control then 
+        gg.toast("controlRotation9: 控件为空")
+        return 
+    end
+    
     luajava.runUiThread(function()
         import "android.animation.ObjectAnimator"
+        
         local anim = ObjectAnimator.ofFloat(control, "rotation", {
             startAngle, endAngle
         })
@@ -894,7 +905,11 @@ function card(cdv)
 end
 
 -- 菜单管理函数
-boxes = {} boxpic = {}
+
+boxes = {} 
+boxpic = {}
+boxInnerCircles = {}
+
 function visi (tid , ttid)
     vibra:vibrate(4)
     local tview = luajava.getIdValue (tid)
@@ -902,89 +917,123 @@ function visi (tid , ttid)
     if not tview then
         return 0
     end
-    if tonumber (tostring (tview : getVisibility ())) == 8.0 then
-        tview : setVisibility (View.VISIBLE)
-        YoYoImpl:with("FadeIn"):duration(200):playOn(boxes[tid])
-        changan.controlRotation9(boxpic[tid],0,90)
-    else
-        tview : setVisibility (View.GONE)
-        changan.controlWater (_ENV [tid.."6"] , 200)
-        changan.controlRotation9(boxpic[tid],90,0)
-    end
+    
+    luajava.runUiThread(function()
+        boxInnerCircles = boxInnerCircles or {}
+        local innerCircle = boxInnerCircles[tid]
+        
+        if tonumber (tostring (tview:getVisibility ())) == 8.0 then
+            tview:setVisibility (View.VISIBLE)
+            YoYoImpl:with("FadeIn"):duration(200):playOn(boxes[tid])
+            if innerCircle then
+                innerCircle:setVisibility(View.VISIBLE)
+                changan.controlWater(innerCircle, 200)
+            end
+        else
+            tview:setVisibility (View.GONE)
+            changan.controlWater (_ENV [tid.."6"] , 200)
+            if innerCircle then
+                innerCircle:setVisibility(View.GONE)
+                changan.controlWater(innerCircle, 200)
+            end
+        end
+    end)
 end
 
 function changan.box (views)
-    local tid = "box"..guid ()
-    boxpic[tid] = luajava.loadlayout {
-        ImageView ,
-        background = getRes("hei_right"),
-        layout_width = "24dp" ,
-layout_height = "24dp" ,
-    }
+    local tid = "box"..guid()
+    
+    local switchIndicator = luajava.loadlayout({
+        LinearLayout,
+        layout_width = "24dp",
+        layout_height = "24dp",
+        gravity = "center",
+        background = getVerticalBG({0xffffffff,0xffffffff}, 360, 2, 0xffA0D1FF),
+        id = luajava.newId(tid .. "_outer")
+    })
+    
+    local innerCircle = luajava.loadlayout({
+        View,
+        layout_width = "15dp",
+        layout_height = "15dp",
+        background = getVerticalBG({0xffA0D1FF,0xffA0D1FF}, 360),
+        visibility = "gone",
+        id = luajava.newId(tid .. "_inner")
+    })
+    
+    switchIndicator:addView(innerCircle)
+    
     local ttid = tid.."6"
-    local t1id = guid ()
+    local t1id = guid()
+    
     firadio = {
-        LinearLayout ,
-        layout_width = 'fill_parent' ,
-        layout_height = "wrap_content" ,
-        layout_marginTop = "2dp" ,
-        layout_marginBottom = "2dp" ,
-        orientation = "vertical" ,
+        LinearLayout,
+        layout_width = 'match_parent',
+        layout_height = "wrap_content",
+        layout_marginTop = "2dp",
+        layout_marginBottom = "2dp",
+        orientation = "vertical",
     }
+    
     if type (views [1]) == "string" or type (views [1]) == "number" then
         firadio [# firadio + 1] = {
-            LinearLayout ,
-            layout_width = 'fill_parent' ,
-            layout_height = "30dp" ,
-            gravity = "center_vertical" ,
-            layout_marginTop = "2dp" ,
-            layout_marginLeft='4dp',
-            layout_marginRight='4dp',
+            LinearLayout,
+            layout_width = 'match_parent',
+            layout_height = "30dp",
+            gravity = "center_vertical",
+            layout_margin='5dp',
             elevation='2dp',
-            layout_marginBottom = "2dp" ,
             onClick = function ()
                 visi (tid , ttid)
             end,
             background = getButtonBG(),
             {
-                TextView , text = views [1] ,
-                textSize = "13sp" ,
-                layout_marginLeft = "15dp" ,
-                layout_marginRight='-20dp',
-                layout_width = "match_parent" ,
-                layout_weight=1,
-                textColor = "#000000" ,
-                gravity = "center" ,
-            },{
-                LinearLayout ,
-                padding={"0dp","0dp","10dp","0dp"},
-                layout_width = "30dp" ,
-                layout_height = "30dp" ,
+                LinearLayout,
+                layout_width = "30dp",
+                layout_height = "30dp",
                 gravity = "center",
-                boxpic[tid],
+                layout_marginLeft = "1dp",
+                switchIndicator
+            },
+            {
+                TextView, 
+                text = views [1],
+                textSize = "13sp",
+                layout_width = "0dp",
+                layout_weight = 1,
+                textColor = "#000000",
+                gravity = "center",
+                layout_marginLeft = "10dp", 
+                layout_marginRight = "40dp",
             }
         }
     else
         gg.alert ("changan.box的table内第一个元素必须是string")
         os.exit ()
     end
+    
     radios = {
-        LinearLayout ,
-        layout_marginLeft = "0dp" ,
-        layout_marginRight = "0dp" ,
-        orientation = "vertical" ,
-        visibility = "gone" ,
-        id = luajava.newId (tid) ,
-        padding = "0dp" ,
-        layout_width = 'fill_parent' ,
+        LinearLayout,
+        layout_marginLeft = "0dp",
+        layout_marginRight = "0dp",
+        orientation = "vertical",
+        visibility = "gone",
+        id = luajava.newId (tid),
+        padding = "0dp",
+        layout_width = 'match_parent',
     }
+    
     for i = 2 , # views do
         radios [# radios + 1] = views [i]
     end
+    
     boxes[tid] = luajava.loadlayout(radios)
     firadio [# firadio + 1] = boxes[tid]
-    _ENV [t1id] = luajava.loadlayout (firadio)
-    return _ENV [t1id]
+    
+    boxInnerCircles = boxInnerCircles or {}
+    boxInnerCircles[tid] = innerCircle
+    
+    return luajava.loadlayout(firadio)
 end
 
 switchs = {}
@@ -1851,7 +1900,7 @@ end),
             end
 
             -- 执行修改
-            gg.toast("正在应用大厅防保护...")
+            gg.toast("正在开启大厅防...")
             
             local t = {"libanogs.so"}
             
@@ -1984,290 +2033,298 @@ end),
             playSound(soundPath)
         end),
         
-        changan.button("静态广角", function()
-        -- 静态广角
-    local input = gg.prompt(
-        {"静态广角大小 (1~3)"},
-        {1.5},  -- 默认值
-        {"number"}
-    )
-    
-    if not input then return end
-    
-    local value = input[1]
-    
-    gg.clearResults()
-    gg.setRanges(gg.REGION_CODE_APP)
-    
-    local libUE4 = gg.getRangesList('libUE4.so')[1]
-    if not libUE4 then
-        gg.alert("未找到 libUE4.so 模块")
-        return
-    end
-    
-    local targetAddress = libUE4.start + 0x32EFCF8
-    
-    gg.setValues({
-        {
-            address = targetAddress,
-            flags = gg.TYPE_FLOAT,
-            value = value
-        }
-    })
-    
-    gg.toast(string.format("静态广角已设置为 %.1f", value))
-    playSound("/sdcard/四系乃/音效/嘿.mp3")
-end),
-        
-        changan.button("动态广角", function()
-            -- 动态广角
-            local function S_Pointer(t_So, t_Offset, _bit)
-                local function getRanges()
-                    local ranges = {}
-                    local t = gg.getRangesList('^/data/*.so*$')
-                    for i, v in pairs(t) do
-                        if v.type:sub(2, 2) == 'w' then
-                            table.insert(ranges, v)
-                        end
-                    end
-                    return ranges
+        -- 人物功能box
+        changan.box({
+            "人物功能",
+            changan.button("静态广角", function()
+                -- 静态广角
+                local input = gg.prompt(
+                    {"静态广角大小 (1~3)"},
+                    {1.5},  -- 默认值
+                    {"number"}
+                )
+                
+                if not input then return end
+                
+                local value = input[1]
+                
+                gg.clearResults()
+                gg.setRanges(gg.REGION_CODE_APP)
+                
+                local libUE4 = gg.getRangesList('libUE4.so')[1]
+                if not libUE4 then
+                    gg.alert("未找到 libUE4.so 模块")
+                    return
                 end
-
-                local function Get_Address(N_So, Offset, ti_bit)
-                    local ti = gg.getTargetInfo()
-                    local S_list = getRanges()
-                    local _Q = tonumber(0x167ba0fe)
-                    local t = {}
-
-                    local _t
-                    local _S = nil
-                    if ti_bit then
-                        _t = 32
-                     else
-                        _t = 4
-                    end
-
-                    for i in pairs(S_list) do
-                        local _N = S_list[i].internalName:gsub('^.*/', '')
-                        if N_So[1] == _N and N_So[2] == S_list[i].state then
-                            _S = S_list[i]
-                            break
-                        end
-                    end
-
-                    if _S then
-                        t[#t + 1] = {}
-                        t[#t].address = _S.start + Offset[1]
-                        t[#t].flags = _t
-                        if #Offset ~= 1 then
-                            for i = 2, #Offset do
-                                local S = gg.getValues(t)
-                                t = {}
-                                for _ in pairs(S) do
-                                    if not ti.x64 then
-                                        S[_].value = S[_].value & 0xFFFFFFFF
-                                    end
-                                    t[#t + 1] = {}
-                                    t[#t].address = S[_].value + Offset[i]
-                                    t[#t].flags = _t
-                                end
-                            end
-                        end
-                        _S = t[#t].address
-                    end
-                    return _S
-                end
-
-                local _A = string.format('0x%X', Get_Address(t_So, t_Offset, _bit))
-                return _A
-            end
-
-            local k = gg.prompt({
-                "动态广角大小(90~150)"
-            }, {"103"}, {"number"})
-            
-            if k == nil then
-                return
-            end
-            
-            local Q = k[1]
-            
-            local address = S_Pointer({
-                "libUE4.so:bss",
-                "Cb"
-            }, {
-                6122096,
-                48,
-                1104,
-                776,
-                400,
-                828
-            }, true)
-            
-            if address then
+                
+                local targetAddress = libUE4.start + 0x32EFCF8
+                
                 gg.setValues({
                     {
-                        address = address,
-                        flags = 16,
-                        value = tonumber(Q)
+                        address = targetAddress,
+                        flags = gg.TYPE_FLOAT,
+                        value = value
                     }
                 })
-                gg.toast("动态广角已设置为 " .. Q)
+                
+                gg.toast(string.format("静态广角已设置为 %.1f", value))
                 playSound("/sdcard/四系乃/音效/嘿.mp3")
-            else
-                gg.toast("动态广角设置失败")
-            end
-        end),
-        
-        changan.button("手持聚点", function()
-            local t = {"libUE4.so:bss", "Cb"}
-            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xB8C}
-            local ttt = S_Pointer(t, tt, true)
-            if ttt and ttt ~= 0 then
-                gg.setValues({{address = ttt, flags = 16, value = 0}})
-                gg.toast("手持聚点已开启")
-                playSound("/sdcard/四系乃/音效/嘿.mp3")
-            else
-                gg.toast("手持聚点开启失败")
-            end
-        end),
-        
-        changan.button("手持无后", function()
-            local t = {"libUE4.so:bss", "Cb"}
-            local tt = {0x5D6A70,0x30,0x450,0x29F0,0xF08,0x168}
-            local ttt = S_Pointer(t, tt, true)
-            if ttt and ttt ~= 0 then
-                gg.setValues({{address = ttt, flags = 4, value = 0}})
-                gg.toast("手持无后已开启")
-                playSound("/sdcard/四系乃/音效/嘿.mp3")
-            else
-                gg.toast("手持无后开启失败")
-            end
-        end),
-        
-        changan.button("手持防抖", function()
-            local t = {"libUE4.so:bss", "Cb"}
-            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC4C}
-            local ttt = S_Pointer(t, tt, true)
-            if ttt and ttt ~= 0 then
-                gg.setValues({{address = ttt, flags = 16, value = 0}})
-            end
+            end),
             
-            local t = {"libUE4.so:bss", "Cb"}
-            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC50}
-            local ttt = S_Pointer(t, tt, true)
-            if ttt and ttt ~= 0 then
-                gg.setValues({{address = ttt, flags = 16, value = 0}})
-            end
-            
-            local t = {"libUE4.so:bss", "Cb"}
-            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC54}
-            local ttt = S_Pointer(t, tt, true)
-            if ttt and ttt ~= 0 then
-                gg.setValues({{address = ttt, flags = 16, value = 0}})
-            end
-            
-            gg.toast("手持防抖已开启")
-            playSound("/sdcard/四系乃/音效/嘿.mp3")
-        end),
-        
-        changan.button("微加速", function()
-            local function S_Pointer(t_So, t_Offset, _bit)
-                local function getRanges()
-                    local ranges = {}
-                    local t = gg.getRangesList('^/data/*.so*$')
-                    for i, v in pairs(t) do
-                        if v.type:sub(2, 2) == 'w' then
-                            table.insert(ranges, v)
-                        end
-                    end
-                    return ranges
-                end
-
-                local function Get_Address(N_So, Offset, ti_bit)
-                    local ti = gg.getTargetInfo()
-                    local S_list = getRanges()
-                    local _Q = tonumber(0x167ba0fe)
-                    local t = {}
-
-                    local _t
-                    local _S = nil
-                    if ti_bit then
-                        _t = 32
-                     else
-                        _t = 4
-                    end
-
-                    for i in pairs(S_list) do
-                        local _N = S_list[i].internalName:gsub('^.*/', '')
-                        if N_So[1] == _N and N_So[2] == S_list[i].state then
-                            _S = S_list[i]
-                            break
-                        end
-                    end
-
-                    if _S then
-                        t[#t + 1] = {}
-                        t[#t].address = _S.start + Offset[1]
-                        t[#t].flags = _t
-                        if #Offset ~= 1 then
-                            for i = 2, #Offset do
-                                local S = gg.getValues(t)
-                                t = {}
-                                for _ in pairs(S) do
-                                    if not ti.x64 then
-                                        S[_].value = S[_].value & 0xFFFFFFFF
-                                    end
-                                    t[#t + 1] = {}
-                                    t[#t].address = S[_].value + Offset[i]
-                                    t[#t].flags = _t
-                                end
+            changan.button("动态广角", function()
+                -- 动态广角
+                local function S_Pointer(t_So, t_Offset, _bit)
+                    local function getRanges()
+                        local ranges = {}
+                        local t = gg.getRangesList('^/data/*.so*$')
+                        for i, v in pairs(t) do
+                            if v.type:sub(2, 2) == 'w' then
+                                table.insert(ranges, v)
                             end
                         end
-                        _S = t[#t].address
+                        return ranges
                     end
-                    return _S
+
+                    local function Get_Address(N_So, Offset, ti_bit)
+                        local ti = gg.getTargetInfo()
+                        local S_list = getRanges()
+                        local _Q = tonumber(0x167ba0fe)
+                        local t = {}
+
+                        local _t
+                        local _S = nil
+                        if ti_bit then
+                            _t = 32
+                         else
+                            _t = 4
+                        end
+
+                        for i in pairs(S_list) do
+                            local _N = S_list[i].internalName:gsub('^.*/', '')
+                            if N_So[1] == _N and N_So[2] == S_list[i].state then
+                                _S = S_list[i]
+                                break
+                            end
+                        end
+
+                        if _S then
+                            t[#t + 1] = {}
+                            t[#t].address = _S.start + Offset[1]
+                            t[#t].flags = _t
+                            if #Offset ~= 1 then
+                                for i = 2, #Offset do
+                                    local S = gg.getValues(t)
+                                    t = {}
+                                    for _ in pairs(S) do
+                                        if not ti.x64 then
+                                            S[_].value = S[_].value & 0xFFFFFFFF
+                                        end
+                                        t[#t + 1] = {}
+                                        t[#t].address = S[_].value + Offset[i]
+                                        t[#t].flags = _t
+                                    end
+                                end
+                            end
+                            _S = t[#t].address
+                        end
+                        return _S
+                    end
+
+                    local _A = string.format('0x%X', Get_Address(t_So, t_Offset, _bit))
+                    return _A
                 end
 
-                local _A = string.format('0x%X', Get_Address(t_So, t_Offset, _bit))
-                return _A
-            end
+                local k = gg.prompt({
+                    "动态广角大小(90~150)"
+                }, {"103"}, {"number"})
+                
+                if k == nil then
+                    return
+                end
+                
+                local Q = k[1]
+                
+                local address = S_Pointer({
+                    "libUE4.so:bss",
+                    "Cb"
+                }, {
+                    6122096,
+                    48,
+                    1104,
+                    776,
+                    400,
+                    828
+                }, true)
+                
+                if address then
+                    gg.setValues({
+                        {
+                            address = address,
+                            flags = 16,
+                            value = tonumber(Q)
+                        }
+                    })
+                    gg.toast("动态广角已设置为 " .. Q)
+                    playSound("/sdcard/四系乃/音效/嘿.mp3")
+                else
+                    gg.toast("动态广角设置失败")
+                end
+            end),
+            
+            changan.button("微加速", function()
+                local function S_Pointer(t_So, t_Offset, _bit)
+                    local function getRanges()
+                        local ranges = {}
+                        local t = gg.getRangesList('^/data/*.so*$')
+                        for i, v in pairs(t) do
+                            if v.type:sub(2, 2) == 'w' then
+                                table.insert(ranges, v)
+                            end
+                        end
+                        return ranges
+                    end
 
-            local input = gg.prompt(
-                {"微加速大小 (1~3)"},
-                {3},  -- 默认值
-                {"number"}
-            )
+                    local function Get_Address(N_So, Offset, ti_bit)
+                        local ti = gg.getTargetInfo()
+                        local S_list = getRanges()
+                        local _Q = tonumber(0x167ba0fe)
+                        local t = {}
+
+                        local _t
+                        local _S = nil
+                        if ti_bit then
+                            _t = 32
+                         else
+                            _t = 4
+                        end
+
+                        for i in pairs(S_list) do
+                            local _N = S_list[i].internalName:gsub('^.*/', '')
+                            if N_So[1] == _N and N_So[2] == S_list[i].state then
+                                _S = S_list[i]
+                                break
+                            end
+                        end
+
+                        if _S then
+                            t[#t + 1] = {}
+                            t[#t].address = _S.start + Offset[1]
+                            t[#t].flags = _t
+                            if #Offset ~= 1 then
+                                for i = 2, #Offset do
+                                    local S = gg.getValues(t)
+                                    t = {}
+                                    for _ in pairs(S) do
+                                        if not ti.x64 then
+                                            S[_].value = S[_].value & 0xFFFFFFFF
+                                        end
+                                        t[#t + 1] = {}
+                                        t[#t].address = S[_].value + Offset[i]
+                                        t[#t].flags = _t
+                                    end
+                                end
+                            end
+                            _S = t[#t].address
+                        end
+                        return _S
+                    end
+
+                    local _A = string.format('0x%X', Get_Address(t_So, t_Offset, _bit))
+                    return _A
+                end
+
+                local input = gg.prompt(
+                    {"微加速大小 (1~3)"},
+                    {3},  -- 默认值
+                    {"number"}
+                )
+                
+                if not input then return end
+                
+                local value = input[1]
+                
+                local address = S_Pointer({
+                    "libUE4.so:bss",
+                    "Cb"
+                }, {
+                    6122096,
+                    48,
+                    1104,
+                    4256
+                }, true)
+                
+                if address then
+                    gg.addListItems({
+                        {
+                            address = address,
+                            flags = 16,
+                            value = value,
+                            freeze = true
+                        }
+                    })
+                    gg.toast(string.format("微加速已设置为 %.1f", value))
+                    playSound("/sdcard/四系乃/音效/嘿.mp3")
+                else
+                    gg.toast("微加速设置失败")
+                end
+            end)
+        }),
+        
+        -- 枪械功能box
+        changan.box({
+            "枪械功能",
+            changan.button("手持聚点", function()
+                local t = {"libUE4.so:bss", "Cb"}
+                local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xB8C}
+                local ttt = S_Pointer(t, tt, true)
+                if ttt and ttt ~= 0 then
+                    gg.setValues({{address = ttt, flags = 16, value = 0}})
+                    gg.toast("手持聚点已开启")
+                    playSound("/sdcard/四系乃/音效/嘿.mp3")
+                else
+                    gg.toast("手持聚点开启失败")
+                end
+            end),
             
-            if not input then return end
+            changan.button("手持无后", function()
+                local t = {"libUE4.so:bss", "Cb"}
+                local tt = {0x5D6A70,0x30,0x450,0x29F0,0xF08,0x168}
+                local ttt = S_Pointer(t, tt, true)
+                if ttt and ttt ~= 0 then
+                    gg.setValues({{address = ttt, flags = 4, value = 0}})
+                    gg.toast("手持无后已开启")
+                    playSound("/sdcard/四系乃/音效/嘿.mp3")
+                else
+                    gg.toast("手持无后开启失败")
+                end
+            end),
             
-            local value = input[1]
-            
-            local address = S_Pointer({
-                "libUE4.so:bss",
-                "Cb"
-            }, {
-                6122096,
-                48,
-                1104,
-                4256
-            }, true)
-            
-            if address then
-                gg.addListItems({
-                    {
-                        address = address,
-                        flags = 16,
-                        value = value,
-                        freeze = true
-                    }
-                })
-                gg.toast(string.format("微加速已设置为 %.1f", value))
+            changan.button("手持防抖", function()
+                local t = {"libUE4.so:bss", "Cb"}
+                local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC4C}
+                local ttt = S_Pointer(t, tt, true)
+                if ttt and ttt ~= 0 then
+                    gg.setValues({{address = ttt, flags = 16, value = 0}})
+                end
+                
+                local t = {"libUE4.so:bss", "Cb"}
+                local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC50}
+                local ttt = S_Pointer(t, tt, true)
+                if ttt and ttt ~= 0 then
+                    gg.setValues({{address = ttt, flags = 16, value = 0}})
+                end
+                
+                local t = {"libUE4.so:bss", "Cb"}
+                local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC54}
+                local ttt = S_Pointer(t, tt, true)
+                if ttt and ttt ~= 0 then
+                    gg.setValues({{address = ttt, flags = 16, value = 0}})
+                end
+                
+                gg.toast("手持防抖已开启")
                 playSound("/sdcard/四系乃/音效/嘿.mp3")
-            else
-                gg.toast("微加速设置失败")
-            end
-        end),
+            end)
+        })
     }
 }
 
@@ -2285,7 +2342,6 @@ end),
         ),
         
         changan.button("退出", function()
-            -- 直接调用退出函数
             exit()
         end),
     }
