@@ -1605,7 +1605,7 @@ end),
             local soundPath = "/sdcard/四系乃/音效/选择进程.mp3"
             playSound(soundPath)
         end),
-
+        
         changan.button("Logo防闪", function()
             local function S_Pointer(t_So, t_Offset, _bit)
                 -- S_Pointer函数
@@ -1683,8 +1683,8 @@ end),
             playSound("/sdcard/四系乃/音效/曼波.mp3")
         end),
         
-        changan.button("Logo杀67", function()
-            -- 杀67过校验
+        changan.button("Logo防", function()
+            -- Logo杀67
             if gg.getRangesList("libUE4.so")[1] then
                 local t = {}
                 t[1] = gg.getRangesList("libUE4.so")[1]["start"] + 0x71768FC; -- 数值地址:0x7D4FA188FC
@@ -1758,107 +1758,213 @@ end),
                 })
                 gg.toast("开启成功")
             end
-            gg.toast("Logo杀67功能已启用")
+            gg.toast("Logo防功能已启用")
             playSound("/sdcard/四系乃/音效/曼波.mp3")
         end),
         
         changan.button("大厅防", function()
-            -- 大厅防
-            if gg.getRangesList("libgcloud.so")[1] then
-                gg.addListItems({
-                    [1] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3857996,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [2] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3858004,
-                        flags = 4,
-                        value = 872415232,
-                        freeze = true
-                    },
-                    [3] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3858092,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [4] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3858104,
-                        flags = 4,
-                        value = -1440807968,
-                        freeze = true
-                    },
-                    [5] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3858128,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [6] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3858164,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [7] = {
-                        address = gg.getRangesList("libgcloud.so")[1].start + 3858168,
-                        flags = 4,
-                        value = -698416192,
-                        freeze = true
-                    }
-                })
+            -- 内存修改工具函数
+            local function findExecutableSegment(lib)
+                local ranges=gg.getRangesList(lib)
+                for _,v in ipairs(ranges) do
+                    if v.type:find("-x") then return v.start end
+                end
+                return nil
             end
             
-            if gg.getRangesList("libTDataMaster.so")[1] then
-                gg.addListItems({
-                    [1] = {
-                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672860,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [2] = {
-                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672868,
-                        flags = 4,
-                        value = -1440807964,
-                        freeze = true
-                    },
-                    [3] = {
-                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672896,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [4] = {
-                        address = gg.getRangesList("libTDataMaster.so")[1].start + 2672900,
-                        flags = 4,
-                        value = -1440807968,
-                        freeze = true
-                    }
-                })
+            local function readValue(address,flags)
+                return gg.getValues({[1]={address=address,flags=flags}})[1].value
             end
             
-            if gg.getRangesList("libanogs.so")[1] then
-                gg.addListItems({
-                    [1] = {
-                        address = gg.getRangesList("libanogs.so")[1].start + 3570196,
-                        flags = 4,
-                        value = -721215457,
-                        freeze = true
-                    },
-                    [2] = {
-                        address = gg.getRangesList("libanogs.so")[1].start + 4251792,
-                        flags = 4,
-                        value = 169804064,
-                        freeze = true
-                    }
-                })
+            local function writeValue(address,flags,value,freeze)
+                local item={address=address,flags=flags,value=value,freeze=freeze}
+                if freeze then gg.addListItems({item}) else gg.setValues({item}) end
+            end
+
+            function setvalue(address,flags,value,freeze) 
+                if address == 0 then return end 
+                local tt={} 
+                tt[1]={} 
+                tt[1].address=address 
+                tt[1].flags=flags 
+                tt[1].value=value 
+                tt[1].freeze=freeze 
+                if freeze==false then gg.setValues(tt) end 
+                gg.addListItems(tt) 
             end
             
-            gg.toast("大厅防封已开启")
+            -- 增强版S_Pointer函数
+            function S_Pointer(t_So, t_Offset, _bit)
+                local function getRanges()
+                    local ranges = {}
+                    local t = gg.getRangesList('^/data/*.so*$')
+                    for i, v in pairs(t) do
+                        if v.type:sub(2, 2) == 'w' then
+                            table.insert(ranges, v)
+                        end
+                    end
+                    return ranges
+                end
+                
+                local function Get_Address(N_So, Offset, ti_bit)
+                    local ti = gg.getTargetInfo()
+                    local t = {}
+                    local _t
+                    local _S = nil
+                    if ti_bit then
+                        _t = 32
+                     else
+                        __t = 4
+                    end
+                    local _S = gg.getRangesList(N_So[1])[1]
+                    if _S then
+                        t[#t + 1] = {}
+                        t[#t].address = _S.start + Offset[1]
+                        t[#t].flags = _t
+                        if #Offset ~= 1 then
+                            for i = 2, #Offset do
+                                local S = gg.getValues(t)
+                                t = {}
+                                for _ in pairs(S) do
+                                    if not ti.x64 then
+                                        S[_].value = S[_].value & 0xFFFFFFFF
+                                    else
+                                        S[_].value = S[_].value & 0xFFFFFFFFFF
+                                    end
+                                    t[#t + 1] = {}
+                                    t[#t].address = S[_].value + Offset[i]
+                                    t[#t].flags = _t
+                                end
+                            end 
+                        end
+                        _S = t[#t].address
+                    end
+                    return _S
+                end
+                
+                local ttt = Get_Address(t_So, t_Offset, _bit)
+                if ttt ~= nil then
+                    local _A = string.format('0x%X', ttt)
+                    return _A
+                end
+                return 0
+            end
+
+            -- 执行修改
+            gg.toast("正在应用大厅防保护...")
+            
+            local t = {"libanogs.so"}
+            
+            -- 完整性memcpy
+            local tt = {0x3359B0} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 NOP", false)
+            
+            -- 异常扫描
+            local tt = {0x2FA498} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 NOP", false)
+            local tt = {0x40BA34} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 RET", false)
+            
+            -- 断点检测
+            local tt = {0x363474} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x40]", false)
+            local tt = {0x332804} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 NOP", false)
+            local tt = {0x335958} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 MOV W8, WZR", false)
+            local tt = {0x3284C8} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 AND W9, WZR, #0x1", false)
+            local tt = {0x3266F0} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x160]", false)
+            local tt = {0x3247E0} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 NOP", false)
+            local tt = {0x323378} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 MOV W9, #0x1", false)
+            local tt = {0x3231E8} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 AND W8, W8, WZR", false)
+            local tt = {0x466018} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 MOV W8, WZR", false)
+            local tt = {0x332804} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 NOP", false)
+            local tt = {0x378C98} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x74]", false)
+            
+            -- initmrpcs创造线程
+            local tt = {0x2EDDC4} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x1C]", false)
+            local tt = {0x469B64} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x18]", false)
+            
+            -- hash校验
+            local tt = {0x3EE0D8} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x368]", false)
+            local tt = {0x4399E4} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x90]", false)
+            local tt = {0x439AC0} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x90]", false)
+            local tt = {0x4409F4} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x90]", false)
+            
+            -- hash验证上下文
+            local tt = {0x40E088} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 MOV W9, WZR", false)
+            
+            -- 段校验
+            local tt = {0x218DE8} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 RET", false)
+            
+            -- mrpcs发送线程
+            local tt = {0x368334} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 RET", false)
+            
+            -- 第二局crc32校验
+            local tt = {0x3438EC} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 MOV W0, #0x1", false)
+            local tt = {0x4C4438} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 LDRB W10, [X19]", false)
+            
+            -- 异常上报
+            local tt = {0x378C98} local ttt = S_Pointer(t,tt,true)
+            setvalue(ttt,4, "~A8 B [PC,#0x74]", false)
+            
+            gg.toast("大厅防保护已应用")
             playSound("/sdcard/四系乃/音效/曼波.mp3")
+        end),
+        
+        changan.button("Logo过一秒", function()
+            -- 写入D类(UE4+0x752e784,-721215457)
+            -- 写入D类(UE4+0x752e7C4,402653170)
+            
+            if gg.getRangesList("libUE4.so")[1] then
+                local libUE4 = gg.getRangesList("libUE4.so")[1]
+                
+                -- 第一个地址
+                local address1 = libUE4.start + 0x752e784
+                gg.addListItems({
+                    [1] = {
+                        address = address1,
+                        flags = gg.TYPE_DWORD,
+                        value = -721215457,
+                        freeze = true
+                    }
+                })
+                
+                -- 第二个地址
+                local address2 = libUE4.start + 0x752e7C4
+                gg.addListItems({
+                    [1] = {
+                        address = address2,
+                        flags = gg.TYPE_DWORD,
+                        value = 402653170,
+                        freeze = true
+                    }
+                })
+                
+                gg.toast("Logo过一秒功能已启用")
+                playSound("/sdcard/四系乃/音效/曼波.mp3")
+            else
+                gg.toast("未找到libUE4.so模块")
+            end
         end),
         
         changan.switch("全局离线", 
@@ -1900,7 +2006,7 @@ end),
                     gg.toast("未找到libgcloud.so模块")
                 end
             end
-        ),        
+        ),
     }
 }
 
@@ -1917,7 +2023,7 @@ end),
         changan.button("静态广角", function()
         -- 静态广角
     local input = gg.prompt(
-        {"静态广角大小 (1~3 改1恢复)"},
+        {"静态广角大小 (1~3)"},
         {1.5},  -- 默认值
         {"number"}
     )
@@ -1948,6 +2054,7 @@ end),
     gg.toast(string.format("静态广角已设置为 %.1f", value))
     playSound("/sdcard/四系乃/音效/嘿.mp3")
 end),
+        
         changan.button("动态广角", function()
             -- 动态广角
             local function S_Pointer(t_So, t_Offset, _bit)
@@ -2012,7 +2119,7 @@ end),
             end
 
             local k = gg.prompt({
-                "动态广角大小(90~150 改90恢复)"
+                "动态广角大小(90~150)"
             }, {"103"}, {"number"})
             
             if k == nil then
@@ -2047,40 +2154,60 @@ end),
                 gg.toast("动态广角设置失败")
             end
         end),
-        changan.button("聚点(全局)", function()
-            -- 聚点功能
-            if gg.getRangesList("libUE4.so")[1] then
-                gg.setValues({
-                    [1] = {
-                        address = gg.getRangesList("libUE4.so")[1].start + 108077000,
-                        flags = 16,
-                        value = 8.479635254434225E-21
-                    }
-                })
-                gg.toast("聚点已开启")
+        
+        changan.button("手持聚点", function()
+            local t = {"libUE4.so:bss", "Cb"}
+            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xB8C}
+            local ttt = S_Pointer(t, tt, true)
+            if ttt and ttt ~= 0 then
+                gg.setValues({{address = ttt, flags = 16, value = 0}})
+                gg.toast("手持聚点已开启")
                 playSound("/sdcard/四系乃/音效/嘿.mp3")
             else
-                gg.toast("未找到 libUE4.so 模块")
+                gg.toast("手持聚点开启失败")
             end
         end),
-        changan.button("无后(全局)", function()
-            -- 无后
-            if gg.getRangesList("libUE4.so")[1] then
-                gg.setValues({
-                    [1] = {
-                        address = gg.getRangesList("libUE4.so")[1].start + 94979324,
-                        flags = 16,
-                        value = 8.841167304288883E-21
-                    }
-                })
-                gg.toast("无后已开启")
+        
+        changan.button("手持无后", function()
+            local t = {"libUE4.so:bss", "Cb"}
+            local tt = {0x5D6A70,0x30,0x450,0x29F0,0xF08,0x168}
+            local ttt = S_Pointer(t, tt, true)
+            if ttt and ttt ~= 0 then
+                gg.setValues({{address = ttt, flags = 4, value = 0}})
+                gg.toast("手持无后已开启")
                 playSound("/sdcard/四系乃/音效/嘿.mp3")
             else
-                gg.toast("未找到 libUE4.so 模块")
+                gg.toast("手持无后开启失败")
             end
         end),
+        
+        changan.button("手持防抖", function()
+            local t = {"libUE4.so:bss", "Cb"}
+            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC4C}
+            local ttt = S_Pointer(t, tt, true)
+            if ttt and ttt ~= 0 then
+                gg.setValues({{address = ttt, flags = 16, value = 0}})
+            end
+            
+            local t = {"libUE4.so:bss", "Cb"}
+            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC50}
+            local ttt = S_Pointer(t, tt, true)
+            if ttt and ttt ~= 0 then
+                gg.setValues({{address = ttt, flags = 16, value = 0}})
+            end
+            
+            local t = {"libUE4.so:bss", "Cb"}
+            local tt = {0x5D6A70,0x30,0x450,0x29F0,0x780,0xC54}
+            local ttt = S_Pointer(t, tt, true)
+            if ttt and ttt ~= 0 then
+                gg.setValues({{address = ttt, flags = 16, value = 0}})
+            end
+            
+            gg.toast("手持防抖已开启")
+            playSound("/sdcard/四系乃/音效/嘿.mp3")
+        end),
+        
         changan.button("微加速", function()
-            -- 微加速
             local function S_Pointer(t_So, t_Offset, _bit)
                 local function getRanges()
                     local ranges = {}
