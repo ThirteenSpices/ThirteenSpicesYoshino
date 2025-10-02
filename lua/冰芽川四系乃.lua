@@ -1931,42 +1931,6 @@ end),
             playSound("/sdcard/四系乃/音效/曼波.mp3")
         end),
         
-        changan.button("Logo过一秒", function()
-            -- 写入D类(UE4+0x752e784,-721215457)
-            -- 写入D类(UE4+0x752e7C4,402653170)
-            
-            if gg.getRangesList("libUE4.so")[1] then
-                local libUE4 = gg.getRangesList("libUE4.so")[1]
-                
-                -- 第一个地址
-                local address1 = libUE4.start + 0x752e784
-                gg.addListItems({
-                    [1] = {
-                        address = address1,
-                        flags = gg.TYPE_DWORD,
-                        value = -721215457,
-                        freeze = true
-                    }
-                })
-                
-                -- 第二个地址
-                local address2 = libUE4.start + 0x752e7C4
-                gg.addListItems({
-                    [1] = {
-                        address = address2,
-                        flags = gg.TYPE_DWORD,
-                        value = 402653170,
-                        freeze = true
-                    }
-                })
-                
-                gg.toast("Logo过一秒功能已启用")
-                playSound("/sdcard/四系乃/音效/曼波.mp3")
-            else
-                gg.toast("未找到libUE4.so模块")
-            end
-        end),
-        
         changan.switch("全局离线", 
             function()
                 -- 开启
